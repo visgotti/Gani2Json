@@ -180,6 +180,9 @@ class GaniToJson {
         var animationFrames = this.animationFrames;
         for(var i = 0; i < animationFrames.length; i++){
             var animationJson = {};
+            if(!animationFrames[i]?.length) {
+                continue;
+            }
             for(var j = 0; j < animationFrames[i].length; j++){
                 //@ts-ignore
                 var frameType = animationFrames[i][j].replace(/ .*/,'');
@@ -197,7 +200,6 @@ class GaniToJson {
                         }
                     }
                     animationJson[INDEX_TO_DIRECTION_MAP[j]] = tempArray
-
                 }
                 if(frameType == "PLAYSOUND" || frameType == "WAIT"){
                     //@ts-ignore
