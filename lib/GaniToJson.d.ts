@@ -1,23 +1,31 @@
-declare type GaniAnimationAttributes = any;
-declare type GaniSpriteAttributes = any;
-declare type GaniSpriteData = Array<number | string>;
-declare type GaniAnimationFrame = {
+type GaniAnimationAttributes = {
+    continuous?: boolean;
+    loop?: boolean;
+    setBackTo?: string;
+};
+type GaniSpriteAttributes = {
+    rotation?: number;
+};
+type GaniSpriteData = Array<number | string>;
+type GaniAnimationFrame = {
     up?: Array<number>;
     down?: Array<number>;
     left?: Array<number>;
     right?: Array<number>;
     frame?: Array<number>;
-    playsound?: Array<number>;
-    wait?: Array<number>;
+    sounds?: Array<{
+        name: string;
+        time?: number;
+        volume?: number;
+    }>;
+    wait?: number;
 };
-declare type GaniImage = any;
-export declare type GaniJsonData = {
+type GaniImage = any;
+export type GaniJsonData = {
     images: Array<GaniImage>;
-    animationAttributes: {
-        [attributeKey: string]: GaniAnimationAttributes;
-    };
+    animationAttributes: GaniAnimationAttributes;
     spriteAttributes: {
-        [attributeKey: string]: GaniSpriteAttributes;
+        [spriteId: string]: GaniSpriteAttributes;
     };
     sprites: {
         [spriteId: string]: GaniSpriteData;
@@ -25,5 +33,5 @@ export declare type GaniJsonData = {
     animationFrames: Array<GaniAnimationFrame>;
 };
 export declare function parseAndSaveGaniFile(ganiFolderPath: string, ganiName: string, parsedFolderPath: string): Promise<GaniJsonData>;
-export declare function parseGaniFile(ganiFolderPath: string, ganiName: string): Promise<GaniJsonData>;
+export declare function parseGaniFile(ganiFolderPath: string, ganiName: string, toDirectoryPath?: string): Promise<GaniJsonData>;
 export {};

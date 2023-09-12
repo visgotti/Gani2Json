@@ -28,8 +28,14 @@ type SpriteImageLookup = {
     h: number,
 }
 
-type GaniAnimationAttributes = any;
-type GaniSpriteAttributes = any;
+type GaniAnimationAttributes = {
+    continuous?: boolean,
+    loop?: boolean,
+    setBackTo?: string,
+};
+type GaniSpriteAttributes = {
+    rotation?: number,
+};
 type GaniSpriteData =  Array<number | string>;
 type GaniAnimationFrame = {
     up?: Array<number>,
@@ -37,15 +43,19 @@ type GaniAnimationFrame = {
     left?: Array<number>,
     right?: Array<number>,
     frame?: Array<number>,
-    playsound?: Array<number>,
-    wait?: Array<number>,
+    sounds?: Array<{
+        name: string,
+        time?: number,
+        volume?: number
+    }>,
+    wait?: number,
  };
 type GaniImage = any;
 
 export type GaniJsonData = {
     images: Array<GaniImage>,
-    animationAttributes: {[attributeKey: string]: GaniAnimationAttributes },
-    spriteAttributes: {[attributeKey: string]: GaniSpriteAttributes},
+    animationAttributes: GaniAnimationAttributes,
+    spriteAttributes:  {[spriteId: string]: GaniSpriteAttributes},
     sprites: {[spriteId: string]: GaniSpriteData },
     animationFrames: Array<GaniAnimationFrame>
 }
@@ -75,12 +85,9 @@ class GaniToJson {
         }
 
         this.fileName = fileName;
-
-        console.log('resolving', this.folderPath, 'and', fileName + '.gani')
         this.filePath = path.resolve(this.folderPath, fileName + ".gani")
 
         this.jsonObject = {
-
             // use this to keep track of image names so it's not repeating
             images: [],
             animationAttributes: {},
@@ -94,7 +101,6 @@ class GaniToJson {
         this.singleDirection = false;
         this.inAnimation = false;
         this.finishedAnimation = false;
-        console.log('creating interface for', this.filePath);
         this.lineReader = readline.createInterface({
             input: fs.createReadStream(this.filePath)
         });
@@ -102,7 +108,6 @@ class GaniToJson {
     }
 
     async parse() : Promise<GaniJsonData> {
-      console.log('finna parse')
         this.lineReader.on('line', (line) => {
             var lineType = line.replace(/ .*/,'');
             // get all string after the linetype
@@ -114,7 +119,7 @@ class GaniToJson {
                     this.jsonObject.sprites[sprite.id] = sprite.array;
                     break;
                 case "SETBACKTO":
-                    this.jsonObject.animationAttributes["setBackToAnimation"] = lineData;
+                    this.jsonObject.animationAttributes.setBackTo = lineData;
                     break;
                 case "ROTATEEFFECT":
                     var lineDataArray = lineData.split(/[ ]+/);
@@ -123,13 +128,13 @@ class GaniToJson {
                     if(!(spriteId in this.jsonObject.spriteAttributes)) {
                         this.jsonObject.spriteAttributes[spriteId] = {};
                     }
-                    this.jsonObject.spriteAttributes[spriteId]["rotation"] = rotation;
+                    this.jsonObject.spriteAttributes[spriteId].rotation = rotation;
                     break;
                 case "LOOP":
-                    this.jsonObject.animationAttributes["loop"] = true;
+                    this.jsonObject.animationAttributes.loop = true;
                     break;
                 case "CONTINUOUS":
-                    this.jsonObject.animationAttributes["continuous"] = true;
+                    this.jsonObject.animationAttributes.continuous = true;
                     break;
                 case "SINGLEDIRECTION":
                     this.singleDirection = true;
@@ -179,14 +184,14 @@ class GaniToJson {
     parseAnimationFrames(){
         var animationFrames = this.animationFrames;
         for(var i = 0; i < animationFrames.length; i++){
-            var animationJson = {};
+            var animationFrameJson : GaniAnimationFrame = {};
             if(!animationFrames[i]?.length) {
                 continue;
             }
             for(var j = 0; j < animationFrames[i].length; j++){
                 //@ts-ignore
                 var frameType = animationFrames[i][j].replace(/ .*/,'');
-                // if its in the first 3 that means its a frame for a direction
+                // if its in the first 4 that means its a frame for a direction
                 if(j <= 3) {
                     // split each sprite by commans to put into array
                     //@ts-ignore
@@ -196,37 +201,52 @@ class GaniToJson {
                         tempArray[k] = tempArray[k].trim().split(/[ ]+/);
                         for (var l = 0; l < tempArray[k].length; l++) {
                             // finally we want these values to integers so parse.
-                            tempArray[k][l] = parseInt(tempArray[k][l])
+                            tempArray[k][l] = parseFloat(tempArray[k][l])
                         }
                     }
-                    animationJson[INDEX_TO_DIRECTION_MAP[j]] = tempArray
+                    animationFrameJson[INDEX_TO_DIRECTION_MAP[j]] = tempArray
                 }
-                if(frameType == "PLAYSOUND" || frameType == "WAIT"){
-                    //@ts-ignore
-                    var tempArray = animationFrames[i][j].trim().split(' ');
-                    tempArray = tempArray.slice(1, tempArray.length);
-                    animationJson[frameType.toLowerCase()] = tempArray;
+                if(frameType == "PLAYSOUND") {
+                    this.parsePlaySoundLine(animationFrames[i][j], animationFrameJson);
+                } else if (frameType === "WAIT") {
+                    this.parseWaitLine(animationFrames[i][j], animationFrameJson);
                 }
             }
             // after looping through the whole frame we can push it to the animation frame array of the json
-            this.jsonObject.animationFrames.push(animationJson)
+            this.jsonObject.animationFrames.push(animationFrameJson)
 
         }
+    }
+    private parseWaitLine(line: string | number, animationFrameJson: GaniAnimationFrame) {
+        const [_, rowValue] = `${line}`.trim().split(' ');
+        animationFrameJson.wait = parseFloat(rowValue);
+    }
+
+    private parsePlaySoundLine(line: string | number, animationFrameJson: GaniAnimationFrame) {
+        const [_, ...rowValues] = `${line}`.trim().split(' ');
+        if(!animationFrameJson.sounds) {
+            animationFrameJson.sounds = [];
+        }
+        animationFrameJson.sounds.push({
+            name: rowValues[0],
+            time: parseFloat(rowValues[1]),
+            volume: parseFloat(rowValues[2]),
+        });
     }
 
     parseSingleDirectionAnimationFrames(){
         const animationFrames = this.animationFrames as any;
         for(var i = 0; i < animationFrames.length; i++){
-            var animationJson = {};
+            var animationFrameJson : GaniAnimationFrame = {};
             for(var j = 0; j < animationFrames[i].length; j++){
                 var frameType = animationFrames[i][j].replace(/ .*/,'');
 
                 switch(frameType){
-                    case "PLAYSOUND":
+                    case "PLAYSOUND": 
+                        this.parsePlaySoundLine(animationFrames[i][j], animationFrameJson);
+                        break;
                     case "WAIT":
-                        var tempArray = animationFrames[i][j].trim().split(' ');
-                        tempArray = tempArray.slice(1, tempArray.length);
-                        animationJson[frameType.toLowerCase()] = tempArray;
+                        this.parseWaitLine(animationFrames[i][j], animationFrameJson);
                         break;
                     case "":
                         var tempArray = animationFrames[i][j].trim().split(',');
@@ -238,7 +258,7 @@ class GaniToJson {
                                 tempArray[k][l] = parseInt(tempArray[k][l])
                             }
                         }
-                        animationJson["frame"] = tempArray;
+                        animationFrameJson["frame"] = tempArray;
                         break;
                     default:
                         console.log('unhandled frameType:', frameType)
@@ -246,8 +266,7 @@ class GaniToJson {
                 }
             }
             // after looping through the whole frame we can push it to the animation frame array of the json
-            this.jsonObject.animationFrames.push(animationJson)
-
+            this.jsonObject.animationFrames.push(animationFrameJson)
         }
     }
 
@@ -303,8 +322,7 @@ export async function parseAndSaveGaniFile(ganiFolderPath: string, ganiName: str
 };
 
 
-export async function parseGaniFile(ganiFolderPath: string, ganiName: string) : Promise<GaniJsonData> {
-    const f = new GaniToJson(ganiFolderPath,ganiName);
-    return f.parse();
+export async function parseGaniFile(ganiFolderPath: string, ganiName: string, toDirectoryPath?: string) : Promise<GaniJsonData> {
+    const f = new GaniToJson(ganiFolderPath, ganiName, toDirectoryPath);
+    return toDirectoryPath ? f.parseAndSave() : f.parse();
 };
-

@@ -942,10 +942,12 @@
           -18
         ]
       ],
-      "playsound": [
-        "steps2.wav",
-        "1.5",
-        "2"
+      "sounds": [
+        {
+          "name": "steps2.wav",
+          "time": 1.5,
+          "volume": 2
+        }
       ]
     },
     {
@@ -1387,10 +1389,12 @@
           -18
         ]
       ],
-      "playsound": [
-        "steps2.wav",
-        "1.5",
-        "2"
+      "sounds": [
+        {
+          "name": "steps2.wav",
+          "time": 1.5,
+          "volume": 2
+        }
       ]
     },
     {
