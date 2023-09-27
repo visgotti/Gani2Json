@@ -1,1 +1,1 @@
-export { parseGaniFile, parseAndSaveGaniFile } from './GaniToJson';
+export { parseGaniFile, parseAndSaveGaniFile, parse } from './GaniToJson';
