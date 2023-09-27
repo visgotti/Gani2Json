@@ -38,7 +38,6 @@ type GaniSpriteAttributes = {
     stretchY?: number,
     rotation?: number,
 };
-type GaniSpriteData =  Array<number | string>;
 type GaniAnimationFrame = {
     up?: Array<number>,
     down?:  Array<number>,
@@ -53,6 +52,10 @@ type GaniAnimationFrame = {
     wait?: number,
  };
 type GaniImage = any;
+
+
+type SheetIndex = number;
+export type GaniSpriteData = [SheetIndex, ...number[]]
 
 export type GaniJsonData = {
     images: Array<GaniImage>,
@@ -116,7 +119,7 @@ class GaniToJson {
         switch(lineType){
             case "SPRITE":
                 var sprite = this.getSpriteJsonFromLine(line);
-                this.jsonObject.sprites[sprite.id] = sprite.array;
+                this.jsonObject.sprites[sprite.id] = sprite.array.map(a => parseInt(`${a}`)) as GaniSpriteData;
                 break;
             case "SETBACKTO":
                 this.jsonObject.animationAttributes.setBackTo = lineData;
@@ -138,7 +141,7 @@ class GaniToJson {
                     this.jsonObject.spriteAttributes[spriteId] = {};
                 }
                 this.jsonObject.spriteAttributes[spriteId].stretchX = parseInt(stretch);
-                break;  
+                break;
             case "ROTATEEFFECT":
                 var lineDataArray = lineData.split(/[ ]+/);
                 var spriteId = lineDataArray[0];
@@ -342,7 +345,7 @@ class GaniToJson {
         let imageIndex = this.jsonObject.images.indexOf(imageName);
         // if the image index is not greater than -1 it's not in the image array yet.
         // push it and get the index length - 1
-        if(!(imageIndex > -1)) {
+        if(imageIndex < 0) {
             this.jsonObject.images.push(imageName);
             imageIndex = this.jsonObject.images.length - 1;
         }

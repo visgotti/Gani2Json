@@ -4,6 +4,8 @@ type GaniAnimationAttributes = {
     setBackTo?: string;
 };
 type GaniSpriteAttributes = {
+    stretchX?: number;
+    stretchY?: number;
     rotation?: number;
 };
 type GaniSpriteData = Array<number | string>;
@@ -33,5 +35,6 @@ export type GaniJsonData = {
     animationFrames: Array<GaniAnimationFrame>;
 };
 export declare function parseAndSaveGaniFile(ganiFolderPath: string, ganiName: string, parsedFolderPath: string): Promise<GaniJsonData>;
-export declare function parseGaniFile(ganiFolderPath: string, ganiName: string, toDirectoryPath?: string): Promise<GaniJsonData>;
+export declare function parseGaniFile(ganiFileContent: string): Promise<GaniJsonData>;
+export declare function parse(ganiFolderPath: string, ganiName: string, toDirectoryPath?: string): Promise<GaniJsonData>;
 export {};
