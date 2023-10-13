@@ -8,7 +8,6 @@ type GaniSpriteAttributes = {
     stretchY?: number;
     rotation?: number;
 };
-type GaniSpriteData = Array<number | string>;
 type GaniAnimationFrame = {
     up?: Array<number>;
     down?: Array<number>;
@@ -23,6 +22,8 @@ type GaniAnimationFrame = {
     wait?: number;
 };
 type GaniImage = any;
+type SheetIndex = number;
+export type GaniSpriteData = [SheetIndex, ...number[]];
 export type GaniJsonData = {
     images: Array<GaniImage>;
     animationAttributes: GaniAnimationAttributes;
