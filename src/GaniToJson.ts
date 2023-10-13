@@ -285,8 +285,7 @@ class GaniToJson {
         for(var i = 0; i < animationFrames.length; i++){
             const animationFrameJson : GaniAnimationFrame = {};
             for(let j = 0; j < animationFrames[i].length; j++){
-                const frameType = animationFrames[i][j].replace(/ .*/,'');
-
+                const frameType = animationFrames[i][j].replace(/ .*/,'').replace(/(\r\n|\n|\r)/gm, "");
                 switch(frameType){
                     case "PLAYSOUND": 
                         this.parsePlaySoundLine(animationFrames[i][j], animationFrameJson);
@@ -307,7 +306,7 @@ class GaniToJson {
                         animationFrameJson["frame"] = tempArray;
                         break;
                     default:
-                        console.log('unhandled frameType:', frameType)
+                        console.log('unhandled frameType:', frameType.trim() === "");
 
                 }
             }
