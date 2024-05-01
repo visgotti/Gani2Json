@@ -39,10 +39,10 @@ type GaniSpriteAttributes = {
     rotation?: number,
 };
 type GaniAnimationFrame = {
-    up?: Array<number>,
-    down?:  Array<number>,
-    left?: Array<number>,
-    right?: Array<number>,
+    up?: Array<number[]>,
+    down?:  Array<number[]>,
+    left?: Array<number[]>,
+    right?: Array<number[]>,
     frame?: Array<number>,
     sounds?: Array<{
         name: string,
